@@ -1,0 +1,12 @@
+[project]
+name = "img-to-drawing"
+version = "0.1.0"
+description = "A Python script to convert images into mouse drawing actions using PyAutoGUI and Potrace."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.20",
+    "potrace>=0.3",
+    "PyAutoGUI>=0.9.50",
+    "Pillow>=9.0"
+]
