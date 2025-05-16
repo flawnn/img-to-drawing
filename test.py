@@ -110,13 +110,9 @@ def image_to_pyautogui_actions(
 
             current_curve_vertices_list = []
             if tesselate_method_config == 'regular':
-                tesselated_vertices_np = curve.tesselate(method='regular', res=tesselate_res_config)
-            elif tesselate_method_config == 'adaptive':
-                tesselated_vertices_np = curve.tesselate(method='adaptive') # 'res' is generally ignored by adaptive.
+                tesselated_vertices_np = curve.tesselate(method=potracelib.Curve.regular, res=TESSELATE_RES)
             else:
-                # Fallback to adaptive if an unknown method is specified.
-                print(f"Warning: Unknown TESSELATE_METHOD: '{tesselate_method_config}'. Defaulting to 'adaptive'.")
-                tesselated_vertices_np = curve.tesselate(method='adaptive')
+                tesselated_vertices_np = curve.tesselate(method=potracelib.Curve.adaptive)
 
 
             if tesselated_vertices_np.size == 0:
