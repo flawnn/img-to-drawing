@@ -7,6 +7,7 @@ import numpy
 import potrace as potracelib  # pypotrace library
 import pyautogui
 from PIL import Image, UnidentifiedImageError
+from skimage.morphology import skeletonize
 
 # This script converts an image into a series of mouse drawing
 # actions using PyAutoGUI. It leverages the Potrace library 
@@ -16,6 +17,8 @@ from PIL import Image, UnidentifiedImageError
 # --- Configuration ---
 # Image Processing & Potrace Settings
 DEFAULT_THRESHOLD_VALUE = 128 # Value (0-255) to distinguish black (to be traced) from white (background).
+USE_SKELETONIZATION = True    # If True, reduces thick black lines to single-pixel centerlines before tracing.
+                              # This makes Potrace trace the CENTER of strokes instead of their outlines.
 POTRACE_TURDSIZE = 2      # Suppress speckles (small paths) smaller than this size (pixels). Potrace default: 2.
                           # Lower values (e.g., 0 or 1) trace more, including very small details.
 POTRACE_OPTTOLERANCE = 0.3 # Potrace curve optimization tolerance. Lower values (e.g., 0.2, pypotrace default)
@@ -33,7 +36,7 @@ TESSELATE_RES = 15          # Resolution for 'regular' tessellation. Higher = sm
 # Drawing Control
 PYAUTOGUI_ACTION_PAUSE = 0.005 # Pause (seconds) between individual PyAutoGUI actions.
 START_DRAW_DELAY = 5         # Seconds to wait before drawing starts, allowing time to switch windows.
-SCALE_FACTOR = 1.1           # Scale of the final drawing. 1.0 = original image size, 0.5 = half, 2.0 = double.
+SCALE_FACTOR = 0.6           # Scale of the final drawing. 1.0 = original image size, 0.5 = half, 2.0 = double.
 
 # Border Skipping Heuristic
 ATTEMPT_TO_SKIP_IMAGE_BORDER = True # If True, tries to detect and skip drawing paths that form a full-image border.
@@ -87,7 +90,18 @@ def image_to_pyautogui_actions(
     # For debugging the thresholding step, uncomment the next line:
     # bw_img.save("debug_thresholded_image.png")
     
-    np_image_data = numpy.array(bw_img) # Potrace (pypotrace) expects a NumPy array.
+    bw_array = numpy.array(bw_img)
+    
+    if USE_SKELETONIZATION:
+        # Skeletonize: reduce thick black lines to single-pixel centerlines.
+        # This makes Potrace trace the center of strokes instead of their outlines.
+        black_regions = ~bw_array  # Invert: True where black (the regions we want to skeletonize)
+        skeleton = skeletonize(black_regions)
+        np_image_data = ~skeleton  # Invert back: False/0 where we want Potrace to trace
+        # For debugging skeletonization, uncomment the next line:
+        # Image.fromarray((~skeleton).astype(numpy.uint8) * 255).save("debug_skeleton.png")
+    else:
+        np_image_data = bw_array  # Potrace (pypotrace) expects a NumPy array.
 
     raw_actions_original_coords = []
     all_points_for_bbox_calculation = [] # Used for overall centering calculation.
@@ -232,6 +246,7 @@ def draw_with_pyautogui(actions, start_delay, action_pause):
     print(f"\nDrawing will start in {start_delay} seconds.")
     print("Please switch to your drawing application window NOW!")
     print(f"Drawing scaled by {SCALE_FACTOR}, centered.")
+    print(f"Skeletonization: {'ON (tracing centerlines)' if USE_SKELETONIZATION else 'OFF (tracing outlines)'}")
     if ATTEMPT_TO_SKIP_IMAGE_BORDER: 
         print("Border skipping: ON.")
     

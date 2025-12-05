@@ -5,8 +5,4 @@ description = "A Python script to convert images into mouse drawing actions usin
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "numpy>=1.20",
-    "potrace>=0.3",
-    "PyAutoGUI>=0.9.50",
-    "Pillow>=9.0"
 ]
